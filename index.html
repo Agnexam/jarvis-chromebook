@@ -479,7 +479,7 @@
     console.error(erreur);
 
     ajouterMessage(
-      "Je n'arrive pas à contacter mon cerveau IA. Vérifie le serveur Cloudflare.",
+      "Erreur : " + (erreur.message || "erreur inconnue"),
       "assistant"
     );
 
