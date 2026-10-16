@@ -493,6 +493,22 @@
 
     // Envoyer un message avec le bouton ou la touche Entrée
     formulaire.addEventListener("submit", function(e) {
+      function parler(texte) {
+  if (!("speechSynthesis" in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const voix = new SpeechSynthesisUtterance(texte);
+  voix.lang = "fr-FR";
+  voix.rate = 0.95;
+
+  const francais = window.speechSynthesis.getVoices()
+    .find(v => v.lang.toLowerCase().startsWith("fr"));
+
+  if (francais) voix.voice = francais;
+
+  window.speechSynthesis.speak(voix);
+}
       e.preventDefault();
 
       const texte = champ.value.trim();
