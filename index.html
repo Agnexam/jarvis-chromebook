@@ -435,107 +435,67 @@
     }
 
     // Réponses programmées de JARVIS
-    function obtenirReponse(texte) {
-      const message = texte
-        .toLocaleLowerCase("fr-FR")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+   formulaire.addEventListener("submit", async function(e) {
+  e.preventDefault();
 
-      if (/\b(bonjour|salut|coucou|bonsoir)\b/.test(message)) {
-        return "Bonjour ! Ravi de te parler. Que puis-je faire pour toi ?";
+  const texte = champ.value.trim();
+  if (!texte) {
+    champ.focus();
+    return;
+  }
+
+  ajouterMessage(texte, "user");
+  champ.value = "";
+  bouton.disabled = true;
+
+  try {
+    const resultat = await fetch(
+      "https://jarvis-cerveau.rayanlegoat31.workers.dev/chat",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: texte })
       }
+    );
 
-      if (message.includes("heure")) {
-        return "Il est " +
-          new Date().toLocaleTimeString("fr-FR") + ".";
-      }
+    const donnees = await resultat.json();
 
-      if (message.includes("date") ||
-          message.includes("quel jour")) {
-        return "Nous sommes le " +
-          new Date().toLocaleDateString("fr-FR", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-          }) + ".";
-      }
-
-      if (message.includes("qui es-tu") ||
-          message.includes("ton nom")) {
-        return "Je suis J.A.R.V.I.S., ton assistant personnel. " +
-          "Je suis encore en version démo.";
-      }
-
-      if (message.includes("aide") ||
-          message.includes("commandes")) {
-        return "Voici ce que je sais faire pour le moment :\n" +
-          "• Répondre aux salutations\n" +
-          "• Donner l'heure\n" +
-          "• Donner la date\n" +
-          "• Expliquer mes commandes\n\n" +
-          "Essaie aussi les boutons rapides !";
-      }
-
-      if (message.includes("merci")) {
-        return "Avec plaisir ! Je suis là pour t'aider.";
-      }
-
-      if (message.includes("comment ca va")) {
-        return "Tous les systèmes sont prêts ! Et toi, que souhaites-tu faire ?";
-      }
-
-      return "J'ai bien reçu : « " + texte + " ».\n\n" +
-        "Je suis encore en version démo et je ne sais pas " +
-        "répondre à toutes les questions. Écris « aide » " +
-        "pour découvrir mes commandes.";
+    if (!resultat.ok) {
+      throw new Error(donnees.error || "Erreur du serveur");
     }
 
-    // Envoyer un message avec le bouton ou la touche Entrée
-    formulaire.addEventListener("submit", function(e) {
-      function parler(texte) {
-  if (!("speechSynthesis" in window)) return;
+    const reponse = donnees.answer ||
+      "Je n'ai pas reçu de réponse.";
 
-  window.speechSynthesis.cancel();
+    ajouterMessage(reponse, "assistant");
 
-  const voix = new SpeechSynthesisUtterance(texte);
-  voix.lang = "fr-FR";
-  voix.rate = 0.95;
+    if (typeof parler === "function") {
+      parler(reponse);
+    }
 
-  const francais = window.speechSynthesis.getVoices()
-    .find(v => v.lang.toLowerCase().startsWith("fr"));
+  } catch (erreur) {
+    console.error(erreur);
 
-  if (francais) voix.voice = francais;
+    ajouterMessage(
+      "Je n'arrive pas à contacter mon cerveau IA. Vérifie le serveur Cloudflare.",
+      "assistant"
+    );
 
-  window.speechSynthesis.speak(voix);
-}
-      e.preventDefault();
+  } finally {
+    bouton.disabled = false;
+    champ.focus();
+  }
+});
 
-      const texte = champ.value.trim();
+document.querySelectorAll(".quick").forEach(function(boutonRapide) {
+  boutonRapide.addEventListener("click", function() {
+    champ.value = boutonRapide.dataset.message;
+    formulaire.requestSubmit();
+  });
+});
 
-      if (!texte) {
-        champ.focus();
-        return;
-      }
-
-      ajouterMessage(texte, "user");
-      champ.value = "";
-      bouton.disabled = true;
-
-    const reponse = obtenirReponse(texte);
-ajouterMessage(reponse, "assistant");
-parler(reponse);
-      bouton.disabled = false;
-      champ.focus();
-    });
-
-      // Les commandes rapides
-    document.querySelectorAll(".quick").forEach(function(boutonRapide) {
-      boutonRapide.addEventListener("click", function() {
-        champ.value = boutonRapide.dataset.message;
-        formulaire.requestSubmit();
-      });
-    });
-  </script>
+</script>
 </body>
 </html>
