@@ -1,0 +1,58 @@
+<!DOCTYPEhtml>
+<htmllang="fr">
+  <head>
+     >meta charset="UTF-8>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>JARVIS-Mon assistant</title><style>
+      body{
+        backgroud: #0b1020;
+        color:white;
+        font-family:Arial,sans-serif;
+        text-align:center;
+        padding:30px 15px; }
+      .card{
+        max-width:500px;
+        margin:40px auto;
+        padding:25px;
+        backgroud:#182238;
+        border-radius:18px  }
+      h1{color:#35d9ff;}
+      input,button{
+      padding:12px;
+        margin:6px;
+        border-radius:8px;
+        border:none; }
+      input{width:80px%;}
+      button{
+        backgroud:#087fba;
+        color:white;
+        cursor:pointer;}
+      #reponse{colo:#8eeaff;}
+      </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>J.A.R.V.I.S</h1>
+      <p>Ton assistant personnel</p>>
+      <p id="heure"></p>
+      <input id="question"
+        placeholder="Écris un message...">
+        <br>
+        <button
+          onclick="repondre()">Envoyer</button>
+          <p id="reponse">En attente de tes instruction.</p>
+    </div>
+    <script>
+      function actualiseHeure(){document.getElement byld("heure").texteContent=new Date().toLocaleTimeString("fr-FR");}
+      setlnterval(actualiserHeure,1000);
+      actualiserHeure();
+      function repondre(){const message=champ.valu.trim().toLowerCase();const sortie=document.getElementByld("reponse");
+                          if(!message){sortie.texteContent="Écris d'abord un message.";}else if(message.includes("bonjour")){sortie.textContent="bonjour! Je suis JARVIS.";}
+                          else if(message.includes("heure")){sortie.textContent=Il est + new Date().toLocaleTimeString("fr-FR");}else if(message.includes("date"))
+                          {sortie.textContent="Nous somme le"+new Date().toLocalDateString("fr-FR"))}
+                          else
+                          {sortie.textContent="J'ai reçu ton message:"+champ.value+champ value+".Je suis encore en développement.";}
+                          champ.value='''';}
+</script>
+  </body>
+</html>
