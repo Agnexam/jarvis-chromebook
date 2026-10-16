@@ -522,9 +522,9 @@
       champ.value = "";
       bouton.disabled = true;
 
-      const reponse = obtenirReponse(texte);
-      ajouterMessage(reponse, "assistant");
-
+    const reponse = obtenirReponse(texte);
+ajouterMessage(reponse, "assistant");
+parler(reponse);
       bouton.disabled = false;
       champ.focus();
     });
