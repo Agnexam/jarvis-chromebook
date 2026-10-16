@@ -43,16 +43,28 @@
           <p id="reponse">En attente de tes instruction.</p>
     </div>
     <script>
-      function actualiseHeure(){document.getElement byld("heure").texteContent=new Date().toLocaleTimeString("fr-FR");}
-      setlnterval(actualiserHeure,1000);
-      actualiserHeure();
-      function repondre(){const message=champ.valu.trim().toLowerCase();const sortie=document.getElementByld("reponse");
-                          if(!message){sortie.texteContent="Écris d'abord un message.";}else if(message.includes("bonjour")){sortie.textContent="bonjour! Je suis JARVIS.";}
-                          else if(message.includes("heure")){sortie.textContent=Il est + new Date().toLocaleTimeString("fr-FR");}else if(message.includes("date"))
-                          {sortie.textContent="Nous somme le"+new Date().toLocalDateString("fr-FR"))}
-                          else
-                          {sortie.textContent="J'ai reçu ton message:"+champ.value+champ value+".Je suis encore en développement.";}
-                          champ.value='''';}
+      function repondre() {
+    const champ = document.getElementById("question");
+    const message = champ.value.trim().toLowerCase();
+    const sortie = document.getElementById("reponse");
+
+    if (!message) {
+        sortie.textContent = "Écris d'abord un message.";
+    } else if (message.includes("bonjour")) {
+        sortie.textContent = "Bonjour ! Je suis JARVIS.";
+    } else if (message.includes("heure")) {
+        sortie.textContent = "Il est " +
+            new Date().toLocaleTimeString("fr-FR");
+    } else if (message.includes("date")) {
+        sortie.textContent = "Nous sommes le " +
+            new Date().toLocaleDateString("fr-FR");
+    } else {
+        sortie.textContent = "J'ai reçu ton message : " +
+            champ.value + ". Je suis encore en développement.";
+    }
+
+    champ.value = "";
+}
 </script>
   </body>
 </html>
