@@ -513,6 +513,13 @@
       champ.focus();
     });
 
-    // Les commandes rapides remplissent et envoient le message
+      // Les commandes rapides
     document.querySelectorAll(".quick").forEach(function(boutonRapide) {
-      boutonRapide.addEventListener("click
+      boutonRapide.addEventListener("click", function() {
+        champ.value = boutonRapide.dataset.message;
+        formulaire.requestSubmit();
+      });
+    });
+  </script>
+</body>
+</html>
