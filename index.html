@@ -1,3 +1,238 @@
-git clone https://github.com/soxoj/maigret.git
-cd maigret
-pip install.
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050b13;color:#00eaff;
+ font-family:Arial,sans-serif;text-align:center;
+ min-height:100vh;
+}
+header{padding:25px}
+h1{font-size:38px;letter-spacing:8px;text-shadow:0 0 20px #00eaff}
+#status{color:#9baeba}
+#circle{
+ width:180px;height:180px;border-radius:50%;
+ border:3px solid #00eaff;margin:35px auto;
+ box-shadow:0 0 30px #00eaff,inset 0 0 25px #00eaff;
+ display:flex;align-items:center;justify-content:center;
+ font-size:55px;animation:pulse 3s infinite;
+}
+@keyframes pulse{
+ 50%{box-shadow:0 0 60px #00eaff,inset 0 0 40px #00eaff}
+}
+button{
+ background:#061b2c;color:#00eaff;
+ border:1px solid #00eaff;padding:12px 18px;
+ margin:5px;border-radius:8px;cursor:pointer;
+}
+button:hover{background:#003344}
+input{
+ background:#071421;color:white;border:1px solid #00eaff;
+ padding:12px;border-radius:8px;width:70%;max-width:500px;
+}
+#chat{
+ max-width:650px;margin:20px auto;padding:10px;
+ text-align:left;height:300px;overflow:auto;
+ border:1px solid #123b4b;border-radius:10px;
+}
+.msg{padding:10px;margin:8px;border-radius:8px;white-space:pre-wrap}
+.user{background:#102b3c;color:white}
+.jarvis{background:#09232b;color:#00eaff}
+small{color:#8aa}
+</style>
+</head>
+
+<body>
+<header>
+<h1>J.A.R.V.I.S.</h1>
+<p id="status">Système prêt</p>
+</header>
+
+<div id="circle">◉</div>
+
+<button onclick="startListening()">🎙️ Activer le micro</button>
+<button onclick="stopListening()">⏹ Arrêter</button>
+<button onclick="speak('Je suis opérationnel.')">🔊 Tester la voix</button>
+
+<div id="chat"></div>
+
+<div>
+<input id="message" placeholder="Parle-moi ou écris..." 
+onkeydown="if(event.key==='Enter')sendMessage()">
+<button onclick="sendMessage()">Envoyer</button>
+</div>
+
+<p>
+<button onclick="remember()">🧠 Mémoriser une préférence</button>
+<button onclick="showMemory()">📋 Voir ma mémoire</button>
+<button onclick="clearMemory()">🗑️ Effacer ma mémoire</button>
+</p>
+
+<small>Les préférences sont stockées localement dans ce navigateur.</small>
+
+<script>
+const WORKER_URL =
+"https://jarvis-cerveau.rayanlegoat31.workers.dev/chat";
+
+const chat = document.getElementById("chat");
+const status = document.getElementById("status");
+const input = document.getElementById("message");
+
+let recognition = null;
+let listening = false;
+
+function addMessage(text,who){
+ const div=document.createElement("div");
+ div.className="msg "+who;
+ div.textContent=(who==="user"?"TOI : ":"J.A.R.V.I.S. : ")+text;
+ chat.appendChild(div);
+ chat.scrollTop=chat.scrollHeight;
+}
+
+function speak(text){
+ if(!("speechSynthesis" in window))return;
+ speechSynthesis.cancel();
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.lang="fr-FR";
+ utterance.rate=0.88;
+ utterance.pitch=0.75;
+ const voices=speechSynthesis.getVoices();
+ const french=voices.find(v=>v.lang.startsWith("fr"));
+ if(french)utterance.voice=french;
+ speechSynthesis.speak(utterance);
+}
+
+function getMemory(){
+ try{return JSON.parse(localStorage.getItem("jarvis_memory")||"[]")}
+ catch{return []}
+}
+
+function remember(){
+ const text=prompt("Quelle préférence dois-je retenir ?");
+ if(!text)return;
+ const memory=getMemory();
+ memory.push(text);
+ localStorage.setItem("jarvis_memory",JSON.stringify(memory));
+ addMessage("Préférence enregistrée localement.","jarvis");
+}
+
+function showMemory(){
+ const memory=getMemory();
+ addMessage(memory.length?
+ memory.map((m,i)=>(i+1)+". "+m).join("\n"):
+ "Ma mémoire est vide.","jarvis");
+}
+
+function clearMemory(){
+ if(confirm("Effacer toutes les préférences enregistrées ?")){
+ localStorage.removeItem("jarvis_memory");
+ addMessage("Mémoire locale effacée.","jarvis");
+ }
+}
+
+async function sendMessage(text){
+ text=text||input.value.trim();
+ if(!text)return;
+ input.value="";
+ addMessage(text,"user");
+ status.textContent="Réflexion en cours...";
+
+ try{
+ const response=await fetch(WORKER_URL,{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({
+ message:text,
+ memory:getMemory()
+ })
+ });
+
+ const data=await response.json();
+ if(!response.ok)throw new Error(data.error||"Erreur serveur");
+
+ const answer=data.response||data.reply||data.text;
+ if(!answer)throw new Error("Réponse vide du serveur");
+
+ addMessage(answer,"jarvis");
+ speak(answer);
+ status.textContent="Opérationnel";
+ }catch(error){
+ addMessage("Erreur : "+error.message,"jarvis");
+ status.textContent="Erreur de connexion";
+ console.error(error);
+ }
+}
+
+function startListening(){
+ const SpeechRecognition=
+ window.SpeechRecognition||window.webkitSpeechRecognition;
+
+ if(!SpeechRecognition){
+ alert("Reconnaissance vocale non disponible dans ce navigateur.");
+ return;
+ }
+
+ if(listening)return;
+
+ recognition=new SpeechRecognition();
+ recognition.lang="fr-FR";
+ recognition.continuous=true;
+ recognition.interimResults=false;
+
+ recognition.onstart=()=>{
+ listening=true;
+ status.textContent="J'écoute. Dis J.A.R.V.I.S. puis ta demande.";
+ };
+
+ recognition.onresult=(event)=>{
+ const result=event.results[event.results.length-1];
+ if(!result.isFinal)return;
+
+ const transcript=result[0].transcript.trim();
+ console.log("Reconnu :",transcript);
+
+ if(transcript.toLowerCase().includes("jarvis")){
+ const command=transcript.replace(/jarvis/ig,"").trim();
+ if(command){
+ sendMessage(command);
+ }else{
+ speak("Oui, je vous écoute.");
+ status.textContent="Je vous écoute.";
+ }
+ }
+ };
+
+ recognition.onerror=(event)=>{
+ console.error("Micro :",event.error);
+ status.textContent="Erreur micro : "+event.error;
+ };
+
+ recognition.onend=()=>{
+ listening=false;
+ if(recognition){
+ status.textContent="Micro arrêté";
+ }
+ };
+
+ recognition.start();
+}
+
+function stopListening(){
+ if(recognition){
+ recognition.stop();
+ recognition=null;
+ }
+ listening=false;
+ status.textContent="Micro désactivé";
+}
+
+addMessage("Bonjour. J.A.R.V.I.S. est prêt.","jarvis");
+</script>
+</body>
+</html>
